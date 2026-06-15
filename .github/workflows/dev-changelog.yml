@@ -1,0 +1,46 @@
+name: Update Dev Changelog
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    # Skip running if the commit message itself was a changelog update (prevents loops)
+    if: "!contains(github.event.head_commit.message, 'chore: update dev changelog')"
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetches all history so the changelog can be built accurately
+
+      - name: Generate Changelog
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: |
+            [changelog]
+            header = "# Development Changelog\n\nAll notable changes to the development branch will be documented here.\n"
+            body = """
+            {% if version %}\
+                ## [{{ version }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+            {% else %}\
+                ## Unreleased Changes (Updated: {{ timestamp | date(format="%Y-%m-%d %H:%M") }})
+            {% endif %}\
+            {% for group, commits in commits | group_by(attribute="group") %}
+                ### {{ group | upper_first }}
+                {% for commit in commits %}
+                    - {{ commit.message | upper_first }} ({{ commit.id | truncate(length=7, end="") }})
+                {% endfor %}
+            {% endfor %}\n
+            """
+            trim = true
+          args: --unreleased --output CHANGELOG.md
+
+      - name: Commit and Push Changelog
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update dev changelog [skip ci]"
+          file_pattern: 'CHANGELOG.md'

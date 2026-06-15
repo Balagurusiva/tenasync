@@ -1,0 +1,64 @@
+name: Build and Deploy to AWS
+
+on:
+  push:
+    branches:
+      - dev
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build with Open-Next
+        run: npx open-next build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Set Environment Variables
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            echo "S3_BUCKET=your-prod-s3-bucket" >> $GITHUB_ENV
+            echo "LAMBDA_FUNCTION=your-prod-lambda" >> $GITHUB_ENV
+            echo "CLOUDFRONT_DIST_ID=YOUR_PROD_DIST_ID" >> $GITHUB_ENV
+          else
+            echo "S3_BUCKET=tenasync-dev" >> $GITHUB_ENV
+            echo "LAMBDA_FUNCTION=tenasync-ssr-dev" >> $GITHUB_ENV
+            echo "CLOUDFRONT_DIST_ID=E2XPUXLUUUDNLH" >> $GITHUB_ENV
+          fi
+          
+      - name: Deploy Static Assets to S3
+        run: |
+          # Syncs the open-next assets folder directly to your S3 bucket
+          aws s3 sync .open-next/assets s3://${{ env.S3_BUCKET }} --delete
+
+      - name: Deploy Server Components to Lambda
+        run: |
+          # 1. Navigate into the open-next server function folder
+          cd .open-next/server-function
+          # 2. Zip the contents silently (-q) without zipping the parent folder itself
+          zip -rq ../deployment.zip .
+          # 3. Upload the zip directly to your Lambda function
+          aws lambda update-function-code \
+            --function-name ${{ env.LAMBDA_FUNCTION }} \
+            --zip-file fileb://../deployment.zip
+
+      - name: Invalidate CloudFront Cache
+        run: aws cloudfront create-invalidation --distribution-id ${{ env.CLOUDFRONT_DIST_ID }} --paths "/*"
