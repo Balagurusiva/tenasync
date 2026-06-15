@@ -43,7 +43,7 @@ jobs:
             echo "LAMBDA_FUNCTION=tenasync-ssr-dev" >> $GITHUB_ENV
             echo "CLOUDFRONT_DIST_ID=E2XPUXLUUUDNLH" >> $GITHUB_ENV
           fi
-          
+
       - name: Deploy Static Assets to S3
         run: |
           # Syncs the open-next assets folder directly to your S3 bucket
@@ -51,14 +51,16 @@ jobs:
 
       - name: Deploy Server Components to Lambda
         run: |
-          # 1. Navigate into the open-next server function folder
-          cd .open-next/server-function
-          # 2. Zip the contents silently (-q) without zipping the parent folder itself
-          zip -rq ../deployment.zip .
+          # 1. Navigate to the correct default server folder
+          cd .open-next/server-functions/default
+          
+          # 2. Zip all files silently inside this folder
+          zip -rq deployment.zip .
+          
           # 3. Upload the zip directly to your Lambda function
           aws lambda update-function-code \
             --function-name ${{ env.LAMBDA_FUNCTION }} \
-            --zip-file fileb://../deployment.zip
+            --zip-file fileb://deployment.zip
 
       - name: Invalidate CloudFront Cache
         run: aws cloudfront create-invalidation --distribution-id ${{ env.CLOUDFRONT_DIST_ID }} --paths "/*"
