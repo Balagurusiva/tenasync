@@ -14,3 +14,5 @@
 - Remove default next.js boilerplate code
 - Setup open-next deployment pipeline and automated dev changelog
 - Grant write permissions to dev changelog workflow
+- Update dev changelog [skip ci]
+- Test live deployment pipeline
