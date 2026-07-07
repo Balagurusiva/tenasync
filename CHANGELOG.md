@@ -16,3 +16,5 @@
 - Grant write permissions to dev changelog workflow
 - Update dev changelog [skip ci]
 - Test live deployment pipeline
+- Setup app providers and install core dependencies
+- Update dev changelog [skip ci]
