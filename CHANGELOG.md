@@ -1,5 +1,9 @@
 ## [unreleased]
 
+### 🚀 Features
+
+- *(theme)* Add ThemeProvider using next-themes
+
 ### 🐛 Bug Fixes
 
 - Update open-next lambda deployment folder path
@@ -17,4 +21,5 @@
 - Update dev changelog [skip ci]
 - Test live deployment pipeline
 - Setup app providers and install core dependencies
+- Update dev changelog [skip ci]
 - Update dev changelog [skip ci]
