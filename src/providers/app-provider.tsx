@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import QueryProvider from "./query-provider";
 import { ToastProvider } from "./toast-provider";
 import { ReduxProvider } from "./redux-provider";
+import { ThemeProvider } from "./theme-provider";
 // import ReduxProvider from "./redux-provider";
 // import ThemeProvider from "./theme-provider";
 
@@ -17,8 +18,10 @@ export default function AppProvider({
     return (
         <QueryProvider>
             <ReduxProvider>
-                <ToastProvider />
-                {children}
+                <ThemeProvider>
+                    <ToastProvider />
+                    {children}
+                </ThemeProvider>
             </ReduxProvider>
         </QueryProvider>
     );
